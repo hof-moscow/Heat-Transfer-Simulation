@@ -6,7 +6,7 @@ import sys
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
     QSlider, QDoubleSpinBox, QVBoxLayout,
-    QHBoxLayout, QGroupBox,QMessageBox
+    QHBoxLayout, QGroupBox,QMessageBox,QComboBox
 )
 from PySide6.QtCore import Qt
 
@@ -16,7 +16,7 @@ class HeatTransfer(QWidget):
         super().__init__()
 
         self.i_heat = 1.23
-        self.time_step = 0.1
+        self.time_step = 100
         self.elapsed_time = 0
 
         self.time_history = []
@@ -71,10 +71,22 @@ class HeatTransfer(QWidget):
         self.left_mass.setSuffix(" kg")
         left_layout.addWidget(self.left_mass)
 
+        left_layout.addWidget(QLabel("Material"))
+
+        self.left_material = QComboBox()
+        self.left_material.addItems([
+            "Custom", "Aluminum", "Copper", "Steel"
+        ])
+        self.left_material.currentTextChanged.connect(
+            self.left_material_changed
+        )
+        left_layout.addWidget(self.left_material)
+
+
         left_layout.addWidget(QLabel("Heat Capacity"))
         self.left_capacity = QDoubleSpinBox()
-        self.left_capacity.setRange(0.01, 1000)
-        self.left_capacity.setValue(0.40)
+        self.left_capacity.setRange(1, 5000)
+        self.left_capacity.setValue(490)
         self.left_capacity.setSuffix(" J/kg°C")
         left_layout.addWidget(self.left_capacity)
 
@@ -137,6 +149,17 @@ class HeatTransfer(QWidget):
         self.right_mass.setValue(10)
         self.right_mass.setSuffix(" kg")
         right_layout.addWidget(self.right_mass)
+
+        right_layout.addWidget(QLabel("Material"))
+
+        self.right_material = QComboBox()
+        self.right_material.addItems([
+            "Custom", "Aluminum", "Copper", "Steel"
+        ])
+        self.right_material.currentTextChanged.connect(
+            self.right_material_changed
+        )
+        right_layout.addWidget(self.right_material)
 
         right_layout.addWidget(QLabel("Heat Capacity"))
         self.right_capacity = QDoubleSpinBox()
@@ -202,17 +225,30 @@ class HeatTransfer(QWidget):
             self.right_slider.setEnabled(True)
 
     def timer_method(self):
-        heat_flow = self.conductivity.value() * (
+
+        sigma = self.conductivity.value()
+
+        heat_flow = sigma * (
             self.body2.temperature - self.body1.temperature
         )
 
-        heat1 = heat_flow * self.time_step
+        max_step = 0.9 / (
+            sigma * (
+                1 / (self.body1.mass * self.body1.heat_capacity)
+                + 1 / (self.body2.mass * self.body2.heat_capacity)
+            )
+        )
+
+        dt = min(self.time_step, max_step)
+
+        heat1 = heat_flow * dt
         heat2 = -heat1
+
 
         temp1 = self.body1.add_heat(heat1)
         temp2 = self.body2.add_heat(heat2)
 
-        self.elapsed_time = self.elapsed_time + self.time_step
+        self.elapsed_time = self.elapsed_time + dt
 
         self.time_history.append(self.elapsed_time)
         self.body1_temp_history.append(temp1)
@@ -237,6 +273,32 @@ class HeatTransfer(QWidget):
                 "Simulation Complete",
                 "Thermal equilibrium reached!"
             )
+
+    def left_material_changed(self, material):
+        capacities = {
+            "Aluminum": 900,
+            "Copper": 385,
+            "Steel": 490
+        }
+
+        if material == "Custom":
+            self.left_capacity.setEnabled(True)
+        else:
+            self.left_capacity.setValue(capacities[material])
+            self.left_capacity.setEnabled(False)
+
+    def right_material_changed(self, material):
+        capacities = {
+            "Aluminum": 900,
+            "Copper": 385,
+            "Steel": 490
+        }
+
+        if material == "Custom":
+            self.right_capacity.setEnabled(True)
+        else:
+            self.right_capacity.setValue(capacities[material])
+            self.right_capacity.setEnabled(False)
 
 
 
