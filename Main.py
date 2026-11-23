@@ -1,4 +1,4 @@
-
+from About import AboutWindow
 import sys
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt
 class HeatTransfer(QWidget):
     def __init__(self):
         super().__init__()
+        self.about_window = AboutWindow()
         self.setupUI()
 
     def setupUI(self):
@@ -84,6 +85,7 @@ class HeatTransfer(QWidget):
         controls.addWidget(self.graph_button)
 
         self.about_button = QPushButton("About")
+        self.about_button.clicked.connect(self.about_window.show)
         controls.addWidget(self.about_button)
 
         controls.addStretch()
