@@ -32,6 +32,7 @@ class HeatTransfer(QWidget):
         self.left_slider = QSlider(Qt.Vertical)
         self.left_slider.setRange(0, 200)
         self.left_slider.setValue(200)
+        self.left_slider.valueChanged.connect(self.left_temperature_changed)
 
         self.left_body = QLabel("BODY 1")
         self.left_body.setObjectName("hotBody")
@@ -95,6 +96,7 @@ class HeatTransfer(QWidget):
         self.right_slider = QSlider(Qt.Vertical)
         self.right_slider.setRange(0, 200)
         self.right_slider.setValue(0)
+        self.right_slider.valueChanged.connect(self.right_temperature_changed)
 
         self.right_body = QLabel("BODY 2")
         self.right_body.setObjectName("coldBody")
@@ -131,6 +133,22 @@ class HeatTransfer(QWidget):
 
         with open("style.qss", "r") as f:
             self.setStyleSheet(f.read())
+
+    def left_temperature_changed(self, value):
+        self.left_temperature.setText(f"Temperature: {value:.1f} °C")
+
+        red = int(value * 255 / 200)
+        self.left_body.setStyleSheet(
+            f"background-color: rgb({red}, 0, 0); color: white;"
+        )
+
+    def right_temperature_changed(self, value):
+        self.right_temperature.setText(f"Temperature: {value:.1f} °C")
+
+        red = int(value * 255 / 200)
+        self.right_body.setStyleSheet(
+            f"background-color: rgb({red}, 0, 0); color: white;"
+        )
 
 
 if __name__ == "__main__":
