@@ -1,5 +1,7 @@
 from About import AboutWindow
 from Graph import GraphWindow
+from Body import Body
+from PySide6.QtCore import QTimer
 import sys
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
@@ -12,6 +14,18 @@ from PySide6.QtCore import Qt
 class HeatTransfer(QWidget):
     def __init__(self):
         super().__init__()
+
+        self.i_heat = 1.23
+        self.time_step = 0.1
+        self.elapsed_time = 0
+
+        self.time_history = []
+        self.body1_temp_history = []
+        self.body2_temp_history = []
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.timer_method)
+
         self.about_window = AboutWindow()
         self.graph_window = GraphWindow(self)
         self.setupUI()
@@ -73,7 +87,7 @@ class HeatTransfer(QWidget):
         controls.addWidget(QLabel("Conductivity"))
         self.conductivity = QDoubleSpinBox()
         self.conductivity.setRange(0.01, 1000)
-        self.conductivity.setValue(1.00)
+        self.conductivity.setValue(self.i_heat)
         self.conductivity.setSuffix(" J/s°C")
         controls.addWidget(self.conductivity)
 
@@ -81,6 +95,7 @@ class HeatTransfer(QWidget):
 
         self.start_button = QPushButton("Start")
         self.start_button.setCheckable(True)
+        self.start_button.clicked.connect(self.start_stop_button_method)
         controls.addWidget(self.start_button)
 
         self.graph_button = QPushButton("Graphs")
@@ -154,6 +169,60 @@ class HeatTransfer(QWidget):
         self.right_body.setStyleSheet(
             f"background-color: rgb({red}, 0, 0); color: white;"
         )
+
+    def start_stop_button_method(self):
+        if self.start_button.isChecked():
+            self.body1 = Body(
+                self.left_mass.value(),
+                self.left_capacity.value(),
+                self.left_slider.value()
+            )
+
+            self.body2 = Body(
+                self.right_mass.value(),
+                self.right_capacity.value(),
+                self.right_slider.value()
+            )
+
+            self.elapsed_time = 0
+            self.time_history = [0]
+            self.body1_temp_history = [self.body1.temperature]
+            self.body2_temp_history = [self.body2.temperature]
+
+            self.start_button.setText("Stop")
+            self.left_slider.setEnabled(False)
+            self.right_slider.setEnabled(False)
+
+            self.timer.start(100)
+
+        else:
+            self.timer.stop()
+            self.start_button.setText("Start")
+            self.left_slider.setEnabled(True)
+            self.right_slider.setEnabled(True)
+
+    def timer_method(self):
+        heat_flow = self.conductivity.value() * (
+            self.body2.temperature - self.body1.temperature
+        )
+
+        heat1 = heat_flow * self.time_step
+        heat2 = -heat1
+
+        temp1 = self.body1.add_heat(heat1)
+        temp2 = self.body2.add_heat(heat2)
+
+        self.elapsed_time = self.elapsed_time + self.time_step
+
+        self.time_history.append(self.elapsed_time)
+        self.body1_temp_history.append(temp1)
+        self.body2_temp_history.append(temp2)
+
+        self.left_slider.setValue(round(temp1))
+        self.right_slider.setValue(round(temp2))
+
+        self.left_temperature_changed(temp1)
+        self.right_temperature_changed(temp2)
 
 
 if __name__ == "__main__":

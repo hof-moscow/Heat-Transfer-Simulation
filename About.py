@@ -22,7 +22,7 @@ class AboutWindow(QWidget):
         layout.addWidget(title)
 
         picture = QLabel()
-        image = QPixmap("simulation.png")
+        image = QPixmap("Simulation.png")
         picture.setPixmap(
             image.scaled(440, 220, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         )
