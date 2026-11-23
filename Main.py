@@ -6,7 +6,7 @@ import sys
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
     QSlider, QDoubleSpinBox, QVBoxLayout,
-    QHBoxLayout, QGroupBox
+    QHBoxLayout, QGroupBox,QMessageBox
 )
 from PySide6.QtCore import Qt
 
@@ -223,6 +223,21 @@ class HeatTransfer(QWidget):
 
         self.left_temperature_changed(temp1)
         self.right_temperature_changed(temp2)
+
+        if abs(temp1 - temp2) <= 0.1:
+            self.timer.stop()
+            self.start_button.setChecked(False)
+            self.start_button.setText("Start")
+
+            self.left_slider.setEnabled(True)
+            self.right_slider.setEnabled(True)
+
+            QMessageBox.information(
+                self,
+                "Simulation Complete",
+                "Thermal equilibrium reached!"
+            )
+
 
 
 if __name__ == "__main__":
