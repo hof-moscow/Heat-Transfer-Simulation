@@ -1,4 +1,5 @@
 from About import AboutWindow
+from Graph import GraphWindow
 import sys
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
@@ -12,6 +13,7 @@ class HeatTransfer(QWidget):
     def __init__(self):
         super().__init__()
         self.about_window = AboutWindow()
+        self.graph_window = GraphWindow(self)
         self.setupUI()
 
     def setupUI(self):
@@ -82,6 +84,7 @@ class HeatTransfer(QWidget):
         controls.addWidget(self.start_button)
 
         self.graph_button = QPushButton("Graphs")
+        self.graph_button.clicked.connect(self.graph_window.show)
         controls.addWidget(self.graph_button)
 
         self.about_button = QPushButton("About")
