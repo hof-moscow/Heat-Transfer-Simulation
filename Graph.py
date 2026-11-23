@@ -44,9 +44,11 @@ class GraphWindow(QWidget):
         controls.addWidget(self.body_combo)
 
         self.draw_button = QPushButton("Draw")
+        self.draw_button.clicked.connect(self.draw_graph)
         controls.addWidget(self.draw_button)
 
         self.clear_button = QPushButton("Clear")
+        self.clear_button.clicked.connect(self.clear_graph)
         controls.addWidget(self.clear_button)
 
         self.export_button = QPushButton("Export to CSV")
@@ -62,10 +64,33 @@ class GraphWindow(QWidget):
 
         self.setup_graph()
 
+
     def setup_graph(self):
-        ax = self.figure.add_subplot(111)
-        ax.set_title("Heat Transfer")
-        ax.set_xlabel("Time (s)")
-        ax.set_ylabel("Temperature (°C)")
-        ax.grid(True)
+        self.figure.clear()
+        self.ax = self.figure.add_subplot(111)
+
+        self.ax.set_title("Heat Transfer")
+        self.ax.set_xlabel("Time (s)")
+        self.ax.set_ylabel("Temperature (°C)")
+        self.ax.grid(True)
+
         self.canvas.draw()
+
+
+    def draw_graph(self):
+        if self.main_window.time_history:
+            times = self.main_window.time_history
+
+            if self.body_combo.currentText() == "Body 1":
+                temperatures = self.main_window.body1_temp_history
+                self.ax.plot(times, temperatures, color="red", label="Body 1")
+
+            else:
+                temperatures = self.main_window.body2_temp_history
+                self.ax.plot(times, temperatures, color="blue", label="Body 2")
+
+            self.ax.legend()
+            self.canvas.draw()
+            
+    def clear_graph(self):
+        self.setup_graph()
