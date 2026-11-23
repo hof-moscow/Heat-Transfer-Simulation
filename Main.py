@@ -90,6 +90,15 @@ class HeatTransfer(QWidget):
         self.left_capacity.setSuffix(" J/kg°C")
         left_layout.addWidget(self.left_capacity)
 
+        left_layout.addWidget(QLabel("External Heater"))
+
+        self.left_heater = QDoubleSpinBox()
+        self.left_heater.setRange(0, 500)
+        self.left_heater.setValue(0)
+        self.left_heater.setSuffix(" W")
+        self.left_heater.setSingleStep(10)
+        left_layout.addWidget(self.left_heater)
+
         left_group.setLayout(left_layout)
         bodies_layout.addWidget(left_group)
 
@@ -163,10 +172,20 @@ class HeatTransfer(QWidget):
 
         right_layout.addWidget(QLabel("Heat Capacity"))
         self.right_capacity = QDoubleSpinBox()
-        self.right_capacity.setRange(0.01, 1000)
-        self.right_capacity.setValue(0.40)
+        self.right_capacity.setRange(1, 5000)
+        self.right_capacity.setValue(490)
         self.right_capacity.setSuffix(" J/kg°C")
         right_layout.addWidget(self.right_capacity)
+
+        right_layout.addWidget(QLabel("External Heater"))
+
+        self.right_heater = QDoubleSpinBox()
+        self.right_heater.setRange(0, 500)
+        self.right_heater.setValue(0)
+        self.right_heater.setSuffix(" W")
+        self.right_heater.setSingleStep(10)
+        right_layout.addWidget(self.right_heater)
+
 
         right_group.setLayout(right_layout)
         bodies_layout.addWidget(right_group)
@@ -180,7 +199,7 @@ class HeatTransfer(QWidget):
     def left_temperature_changed(self, value):
         self.left_temperature.setText(f"Temperature: {value:.1f} °C")
 
-        red = int(value * 255 / 200)
+        red = max(0, min(255, int(value * 255 / 200)))
         self.left_body.setStyleSheet(
             f"background-color: rgb({red}, 0, 0); color: white;"
         )
@@ -188,7 +207,7 @@ class HeatTransfer(QWidget):
     def right_temperature_changed(self, value):
         self.right_temperature.setText(f"Temperature: {value:.1f} °C")
 
-        red = int(value * 255 / 200)
+        red = max(0, min(255, int(value * 255 / 200)))
         self.right_body.setStyleSheet(
             f"background-color: rgb({red}, 0, 0); color: white;"
         )
@@ -241,8 +260,9 @@ class HeatTransfer(QWidget):
 
         dt = min(self.time_step, max_step)
 
-        heat1 = heat_flow * dt
-        heat2 = -heat1
+        heat1 = (heat_flow + self.left_heater.value()) * dt
+        heat2 = (-heat_flow + self.right_heater.value()) * dt
+
 
 
         temp1 = self.body1.add_heat(heat1)
@@ -260,7 +280,11 @@ class HeatTransfer(QWidget):
         self.left_temperature_changed(temp1)
         self.right_temperature_changed(temp2)
 
-        if abs(temp1 - temp2) <= 0.1:
+        if (
+            self.left_heater.value() == 0
+            and self.right_heater.value() == 0
+            and abs(temp1 - temp2) <= 0.1
+        ):
             self.timer.stop()
             self.start_button.setChecked(False)
             self.start_button.setText("Start")
