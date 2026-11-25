@@ -15,7 +15,6 @@ class HeatTransfer(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.i_heat = 1.23
         self.time_step = 100
         self.elapsed_time = 0
 
@@ -108,9 +107,18 @@ class HeatTransfer(QWidget):
         controls.addWidget(QLabel("Conductivity"))
         self.conductivity = QDoubleSpinBox()
         self.conductivity.setRange(0.01, 1000)
-        self.conductivity.setValue(self.i_heat)
+        self.conductivity.setValue(1.0)
         self.conductivity.setSuffix(" J/s°C")
         controls.addWidget(self.conductivity)
+
+        self.heat_transfer_label = QLabel("Heat Transferred: 0.0 J")
+        controls.addWidget(self.heat_transfer_label)
+
+        self.external_energy_label = QLabel("External Energy: 0.0 J")
+        controls.addWidget(self.external_energy_label)
+
+        self.sim_time_label = QLabel("Simulation Time: 0.0 s")
+        controls.addWidget(self.sim_time_label)
 
         controls.addStretch()
 
@@ -227,6 +235,16 @@ class HeatTransfer(QWidget):
             )
 
             self.elapsed_time = 0
+
+            self.total_transferred_heat = 0.0
+            self.total_heater_energy = 0.0
+
+            self.heat_transfer_label.setText("Heat Transferred: 0.0 J")
+            self.external_energy_label.setText("External Energy: 0.0 J")
+            self.sim_time_label.setText("Simulation Time: 0.0 s")
+
+            self.total_transferred_heat = 0.0
+            self.total_heater_energy = 0.0
             self.time_history = [0]
             self.body1_temp_history = [self.body1.temperature]
             self.body2_temp_history = [self.body2.temperature]
@@ -263,12 +281,28 @@ class HeatTransfer(QWidget):
         heat1 = (heat_flow + self.left_heater.value()) * dt
         heat2 = (-heat_flow + self.right_heater.value()) * dt
 
+        self.total_transferred_heat += abs(heat_flow) * dt
+
+        heater_power = self.left_heater.value() + self.right_heater.value()
+        self.total_heater_energy += heater_power * dt
 
 
         temp1 = self.body1.add_heat(heat1)
         temp2 = self.body2.add_heat(heat2)
 
         self.elapsed_time = self.elapsed_time + dt
+
+        self.heat_transfer_label.setText(
+            f"Heat Transferred: {self.total_transferred_heat:.1f} J"
+        )
+
+        self.external_energy_label.setText(
+            f"External Energy: {self.total_heater_energy:.1f} J"
+        )
+
+        self.sim_time_label.setText(
+            f"Simulation Time: {self.elapsed_time:.1f} s"
+        )
 
         self.time_history.append(self.elapsed_time)
         self.body1_temp_history.append(temp1)
